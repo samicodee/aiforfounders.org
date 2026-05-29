@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
+import { leadStatuses, type LeadStatus } from "@/app/lib/lead-statuses";
 
 const MAX_FIELD_LENGTH = 1200;
 const LEADS_TABLE = "leads";
@@ -20,6 +21,9 @@ export type LeadInput = {
 export type LeadRecord = Omit<LeadInput, "company_website"> & {
   id: string;
   createdAt: string;
+  status: LeadStatus;
+  notes: string;
+  last_contacted_at: string | null;
 };
 
 type LeadRow = {
@@ -34,6 +38,9 @@ type LeadRow = {
   role: string;
   business_stage: string;
   problem_statement: string;
+  status: LeadStatus;
+  notes: string | null;
+  last_contacted_at: string | null;
 };
 
 export type ValidationResult =
@@ -72,6 +79,12 @@ function cleanText(value: unknown) {
   }
 
   return value.replace(/\s+/g, " ").trim().slice(0, MAX_FIELD_LENGTH);
+}
+
+function cleanNullableText(value: unknown) {
+  const cleaned = cleanText(value);
+
+  return cleaned || null;
 }
 
 export function validateLeadInput(input: unknown): ValidationResult {
@@ -166,6 +179,9 @@ function mapLeadRow(row: LeadRow): LeadRecord {
     role: row.role,
     business_stage: row.business_stage,
     problem_statement: row.problem_statement,
+    status: row.status,
+    notes: row.notes ?? "",
+    last_contacted_at: row.last_contacted_at,
   };
 }
 
@@ -186,7 +202,7 @@ export async function saveLead(input: LeadInput): Promise<LeadRecord> {
       problem_statement: input.problem_statement,
     })
     .select(
-      "id, created_at, name, phone, email, program, source_domain, business, role, business_stage, problem_statement",
+      "id, created_at, name, phone, email, program, source_domain, business, role, business_stage, problem_statement, status, notes, last_contacted_at",
     )
     .single<LeadRow>();
 
@@ -202,7 +218,7 @@ export async function readLeads(): Promise<LeadRecord[]> {
   const { data, error } = await supabase
     .from(LEADS_TABLE)
     .select(
-      "id, created_at, name, phone, email, program, source_domain, business, role, business_stage, problem_statement",
+      "id, created_at, name, phone, email, program, source_domain, business, role, business_stage, problem_statement, status, notes, last_contacted_at",
     )
     .order("created_at", { ascending: false })
     .returns<LeadRow[]>();
@@ -212,4 +228,62 @@ export async function readLeads(): Promise<LeadRecord[]> {
   }
 
   return data.map(mapLeadRow);
+}
+
+export async function updateLead(
+  id: string,
+  input: {
+    status?: unknown;
+    notes?: unknown;
+    last_contacted_at?: unknown;
+  },
+): Promise<LeadRecord> {
+  if (!id) {
+    throw new Error("Missing lead id.");
+  }
+
+  const updates: {
+    status?: LeadStatus;
+    notes?: string | null;
+    last_contacted_at?: string | null;
+  } = {};
+
+  if (input.status !== undefined) {
+    const status = cleanText(input.status);
+
+    if (!leadStatuses.includes(status as LeadStatus)) {
+      throw new Error("Invalid lead status.");
+    }
+
+    updates.status = status as LeadStatus;
+  }
+
+  if (input.notes !== undefined) {
+    updates.notes = cleanNullableText(input.notes);
+  }
+
+  if (input.last_contacted_at !== undefined) {
+    const lastContactedAt = cleanText(input.last_contacted_at);
+    updates.last_contacted_at = lastContactedAt || null;
+  }
+
+  if (Object.keys(updates).length === 0) {
+    throw new Error("No lead updates provided.");
+  }
+
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from(LEADS_TABLE)
+    .update(updates)
+    .eq("id", id)
+    .select(
+      "id, created_at, name, phone, email, program, source_domain, business, role, business_stage, problem_statement, status, notes, last_contacted_at",
+    )
+    .single<LeadRow>();
+
+  if (error) {
+    throw new Error(`Could not update lead: ${error.message}`);
+  }
+
+  return mapLeadRow(data);
 }

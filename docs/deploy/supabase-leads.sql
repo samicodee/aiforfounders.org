@@ -13,13 +13,21 @@ create table if not exists public.leads (
   business_stage text not null check (
     business_stage in ('pre-revenue', '0-1cr', '1-5cr', '5-25cr', '25cr-plus')
   ),
-  problem_statement text not null
+  problem_statement text not null,
+  status text not null default 'new' check (
+    status in ('new', 'contacted', 'qualified', 'accepted', 'rejected')
+  ),
+  notes text,
+  last_contacted_at timestamptz
 );
 
 alter table public.leads add column if not exists email text;
 alter table public.leads add column if not exists source_domain text default 'aiforfounders.org';
 alter table public.leads add column if not exists business_stage text;
 alter table public.leads add column if not exists problem_statement text;
+alter table public.leads add column if not exists status text default 'new';
+alter table public.leads add column if not exists notes text;
+alter table public.leads add column if not exists last_contacted_at timestamptz;
 
 do $$
 begin
@@ -71,6 +79,22 @@ alter table public.leads alter column email set not null;
 alter table public.leads alter column source_domain set not null;
 alter table public.leads alter column business_stage set not null;
 alter table public.leads alter column problem_statement set not null;
+update public.leads set status = 'new' where status is null;
+alter table public.leads alter column status set default 'new';
+alter table public.leads alter column status set not null;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'leads_status_check'
+      and conrelid = 'public.leads'::regclass
+  ) then
+    alter table public.leads add constraint leads_status_check
+      check (status in ('new', 'contacted', 'qualified', 'accepted', 'rejected'));
+  end if;
+end $$;
 
 alter table public.leads enable row level security;
 

@@ -3,6 +3,7 @@ import {
   isLikelySpam,
   readLeads,
   saveLead,
+  updateLead,
   validateLeadInput,
 } from "@/app/lib/leads";
 
@@ -104,4 +105,61 @@ export async function GET(request: NextRequest) {
     count: leads.length,
     leads,
   });
+}
+
+export async function PATCH(request: NextRequest) {
+  if (!hasAdminAccess(request)) {
+    return NextResponse.json(
+      {
+        message: "Set LEADS_ADMIN_TOKEN and pass it as a Bearer token.",
+      },
+      { status: 401 },
+    );
+  }
+
+  let body: unknown;
+
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      {
+        message: "Submit valid JSON.",
+      },
+      { status: 400 },
+    );
+  }
+
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return NextResponse.json(
+      {
+        message: "Submit lead update fields.",
+      },
+      { status: 400 },
+    );
+  }
+
+  const { id, ...updates } = body as {
+    id?: string;
+    status?: unknown;
+    notes?: unknown;
+    last_contacted_at?: unknown;
+  };
+
+  try {
+    const lead = await updateLead(id ?? "", updates);
+
+    return NextResponse.json({
+      lead,
+      message: "Lead updated.",
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        message:
+          error instanceof Error ? error.message : "Could not update lead.",
+      },
+      { status: 400 },
+    );
+  }
 }
