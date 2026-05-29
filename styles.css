@@ -612,6 +612,14 @@ blockquote {
   box-shadow: var(--shadow);
 }
 
+.application-form > input[name="company_website"] {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
 label {
   display: grid;
   gap: 8px;
@@ -638,6 +646,14 @@ textarea {
 
 .form-note {
   font-size: 13px;
+}
+
+.form-note.is-success {
+  color: #0f7a42;
+}
+
+.form-note.is-error {
+  color: var(--red-dark);
 }
 
 .site-footer {

@@ -1,5 +1,6 @@
 import { Header } from "@/app/components/Header";
 import { Hero } from "@/app/components/Hero";
+import { ApplicationForm } from "@/app/components/ApplicationForm";
 
 const outcomes = [
   {
@@ -165,62 +166,11 @@ export default function Home() {
               <p className="kicker">Founder application</p>
               <h2>Apply for AI for Founders.</h2>
               <p>
-                If there is fit, the next step is an application call. This form is
-                structured to plug into the shared AIFORX backend when we add the
-                central application portal.
+                If there is fit, the next step is an application call. Your
+                application is captured for review before seats are confirmed.
               </p>
             </div>
-            <form
-              className="application-form"
-              action="mailto:hi@aiforx.org"
-              method="post"
-              encType="text/plain"
-            >
-              <input type="hidden" name="program" value="founders" />
-              <input type="hidden" name="source_domain" value="aiforfounders.org" />
-              <label>
-                Name
-                <input name="name" type="text" autoComplete="name" required />
-              </label>
-              <label>
-                Phone / WhatsApp
-                <input name="phone" type="tel" autoComplete="tel" required />
-              </label>
-              <label>
-                Email
-                <input name="email" type="email" autoComplete="email" required />
-              </label>
-              <label>
-                Business name
-                <input name="business" type="text" required />
-              </label>
-              <label>
-                Your role
-                <input name="role" type="text" placeholder="Founder, co-founder, owner, CEO..." required />
-              </label>
-              <label>
-                Current business stage
-                <select name="business_stage" required defaultValue="">
-                  <option value="" disabled>Select one</option>
-                  <option value="pre-revenue">Pre-revenue / idea stage</option>
-                  <option value="0-1cr">Under Rs 1Cr revenue</option>
-                  <option value="1-5cr">Rs 1Cr - 5Cr revenue</option>
-                  <option value="5-25cr">Rs 5Cr - 25Cr revenue</option>
-                  <option value="25cr-plus">Rs 25Cr+ revenue</option>
-                </select>
-              </label>
-              <label>
-                Biggest founder bottleneck AI should help with
-                <textarea name="problem_statement" rows={4} required />
-              </label>
-              <button className="button primary" type="submit">
-                Send Founder Application
-              </button>
-              <p className="form-note">
-                Current version sends by email. Backend database capture will use
-                the same fields across all AIforX program sites.
-              </p>
-            </form>
+            <ApplicationForm />
           </div>
         </section>
       </main>
