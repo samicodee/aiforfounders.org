@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { hasAdminSession } from "@/app/lib/admin-auth";
 import {
   isLikelySpam,
   readLeads,
@@ -14,10 +15,13 @@ function hasAdminAccess(request: NextRequest) {
   const token = process.env.LEADS_ADMIN_TOKEN;
 
   if (!token) {
-    return false;
+    return hasAdminSession(request);
   }
 
-  return request.headers.get("authorization") === `Bearer ${token}`;
+  return (
+    request.headers.get("authorization") === `Bearer ${token}` ||
+    hasAdminSession(request)
+  );
 }
 
 export async function POST(request: NextRequest) {

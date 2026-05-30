@@ -44,7 +44,9 @@ function formatDate(value: string | null) {
 }
 
 export function AdminLeads() {
-  const [token, setToken] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSignedIn, setIsSignedIn] = useState(false);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [activeStatus, setActiveStatus] = useState<LeadStatus | "all">("all");
   const [message, setMessage] = useState("");
@@ -69,16 +71,55 @@ export function AdminLeads() {
     );
   }, [leads]);
 
+  async function signIn(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsLoading(true);
+    setMessage("");
+
+    try {
+      const response = await fetch("/api/admin/session/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username,
+          password,
+        }),
+      });
+      const result = (await response.json()) as {
+        message?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(result.message ?? "Could not sign in.");
+      }
+
+      setIsSignedIn(true);
+      setPassword("");
+      await loadLeads();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not sign in.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function signOut() {
+    await fetch("/api/admin/session/", {
+      method: "DELETE",
+    });
+    setIsSignedIn(false);
+    setLeads([]);
+    setMessage("Signed out.");
+  }
+
   async function loadLeads() {
     setIsLoading(true);
     setMessage("");
 
     try {
-      const response = await fetch("/api/leads/", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch("/api/leads/");
       const result = (await response.json()) as LeadResponse;
 
       if (!response.ok) {
@@ -107,7 +148,6 @@ export function AdminLeads() {
       const response = await fetch("/api/leads/", {
         method: "PATCH",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -147,18 +187,38 @@ export function AdminLeads() {
             <p className="kicker">AI for Founders</p>
             <h1>Lead Admin</h1>
           </div>
-          <div className="admin-auth">
-            <input
-              aria-label="Admin token"
-              value={token}
-              onChange={(event) => setToken(event.target.value)}
-              placeholder="LEADS_ADMIN_TOKEN"
-              type="password"
-            />
-            <button className="button primary" onClick={loadLeads} type="button">
-              {isLoading ? "Loading..." : "Load Leads"}
-            </button>
-          </div>
+          {isSignedIn ? (
+            <div className="admin-auth">
+              <button className="button primary" onClick={loadLeads} type="button">
+                {isLoading ? "Loading..." : "Refresh"}
+              </button>
+              <button className="admin-small-button" onClick={signOut} type="button">
+                Sign out
+              </button>
+            </div>
+          ) : (
+            <form className="admin-auth" onSubmit={signIn}>
+              <input
+                aria-label="Username"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                placeholder="Username"
+                type="text"
+                autoComplete="username"
+              />
+              <input
+                aria-label="Password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="Password"
+                type="password"
+                autoComplete="current-password"
+              />
+              <button className="button primary" type="submit">
+                {isLoading ? "Signing in..." : "Sign in"}
+              </button>
+            </form>
+          )}
         </div>
 
         <div className="admin-status-bar">
