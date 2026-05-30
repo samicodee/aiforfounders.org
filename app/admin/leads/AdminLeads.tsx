@@ -221,110 +221,119 @@ export function AdminLeads() {
           )}
         </div>
 
-        <div className="admin-status-bar">
-          <button
-            className={activeStatus === "all" ? "is-active" : ""}
-            onClick={() => setActiveStatus("all")}
-            type="button"
-          >
-            All <span>{leads.length}</span>
-          </button>
-          {leadStatuses.map((status) => (
-            <button
-              className={activeStatus === status ? "is-active" : ""}
-              key={status}
-              onClick={() => setActiveStatus(status)}
-              type="button"
-            >
-              {statusLabels[status]} <span>{counts[status]}</span>
-            </button>
-          ))}
-        </div>
-
         {message ? <p className="admin-message">{message}</p> : null}
 
-        <div className="lead-table-wrap">
-          <table className="lead-table">
-            <thead>
-              <tr>
-                <th>Lead</th>
-                <th>Business</th>
-                <th>Stage</th>
-                <th>Status</th>
-                <th>Notes</th>
-                <th>Contacted</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredLeads.map((lead) => (
-                <tr key={lead.id}>
-                  <td>
-                    <strong>{lead.name}</strong>
-                    <span>{lead.phone}</span>
-                    <span>{lead.email}</span>
-                    <small>{formatDate(lead.createdAt)}</small>
-                  </td>
-                  <td>
-                    <strong>{lead.business}</strong>
-                    <span>{lead.role}</span>
-                    <p>{lead.problem_statement}</p>
-                  </td>
-                  <td>{lead.business_stage}</td>
-                  <td>
-                    <select
-                      value={lead.status}
-                      onChange={(event) =>
-                        updateLead(lead.id, {
-                          status: event.target.value as LeadStatus,
-                        })
-                      }
-                      disabled={savingLeadId === lead.id}
-                    >
-                      {leadStatuses.map((status) => (
-                        <option key={status} value={status}>
-                          {statusLabels[status]}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td>
-                    <textarea
-                      defaultValue={lead.notes}
-                      onBlur={(event) =>
-                        updateLead(lead.id, {
-                          notes: event.currentTarget.value,
-                        })
-                      }
-                      placeholder="Call notes, fit, next step..."
-                      rows={4}
-                      disabled={savingLeadId === lead.id}
-                    />
-                  </td>
-                  <td>
-                    <span>{formatDate(lead.last_contacted_at)}</span>
-                    <button
-                      className="admin-small-button"
-                      onClick={() =>
-                        updateLead(lead.id, {
-                          last_contacted_at: new Date().toISOString(),
-                        })
-                      }
-                      type="button"
-                      disabled={savingLeadId === lead.id}
-                    >
-                      Mark now
-                    </button>
-                  </td>
-                </tr>
+        {!isSignedIn ? (
+          <div className="admin-login-panel">
+            <h2>Sign in to manage leads.</h2>
+            <p>Use the admin username and password configured for this site.</p>
+          </div>
+        ) : (
+          <>
+            <div className="admin-status-bar">
+              <button
+                className={activeStatus === "all" ? "is-active" : ""}
+                onClick={() => setActiveStatus("all")}
+                type="button"
+              >
+                All <span>{leads.length}</span>
+              </button>
+              {leadStatuses.map((status) => (
+                <button
+                  className={activeStatus === status ? "is-active" : ""}
+                  key={status}
+                  onClick={() => setActiveStatus(status)}
+                  type="button"
+                >
+                  {statusLabels[status]} <span>{counts[status]}</span>
+                </button>
               ))}
-              {filteredLeads.length === 0 ? (
-                <tr>
-                  <td colSpan={6}>No leads in this view.</td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
+            </div>
+
+            <div className="lead-table-wrap">
+              <table className="lead-table">
+                <thead>
+                  <tr>
+                    <th>Lead</th>
+                    <th>Business</th>
+                    <th>Stage</th>
+                    <th>Status</th>
+                    <th>Notes</th>
+                    <th>Contacted</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredLeads.map((lead) => (
+                    <tr key={lead.id}>
+                      <td>
+                        <strong>{lead.name}</strong>
+                        <span>{lead.phone}</span>
+                        <span>{lead.email}</span>
+                        <small>{formatDate(lead.createdAt)}</small>
+                      </td>
+                      <td>
+                        <strong>{lead.business}</strong>
+                        <span>{lead.role}</span>
+                        <p>{lead.problem_statement}</p>
+                      </td>
+                      <td>{lead.business_stage}</td>
+                      <td>
+                        <select
+                          value={lead.status}
+                          onChange={(event) =>
+                            updateLead(lead.id, {
+                              status: event.target.value as LeadStatus,
+                            })
+                          }
+                          disabled={savingLeadId === lead.id}
+                        >
+                          {leadStatuses.map((status) => (
+                            <option key={status} value={status}>
+                              {statusLabels[status]}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td>
+                        <textarea
+                          defaultValue={lead.notes}
+                          onBlur={(event) =>
+                            updateLead(lead.id, {
+                              notes: event.currentTarget.value,
+                            })
+                          }
+                          placeholder="Call notes, fit, next step..."
+                          rows={4}
+                          disabled={savingLeadId === lead.id}
+                        />
+                      </td>
+                      <td>
+                        <span>{formatDate(lead.last_contacted_at)}</span>
+                        <button
+                          className="admin-small-button"
+                          onClick={() =>
+                            updateLead(lead.id, {
+                              last_contacted_at: new Date().toISOString(),
+                            })
+                          }
+                          type="button"
+                          disabled={savingLeadId === lead.id}
+                        >
+                          Mark now
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredLeads.length === 0 ? (
+                    <tr>
+                      <td colSpan={6}>No leads in this view.</td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </section>
     </main>
   );
